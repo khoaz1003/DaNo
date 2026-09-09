@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DaNô - Đăng Nhập</title>
+    <link rel="icon" type="image/png" href="logon.png">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: linear-gradient(135deg, #003079 0%, #001a72 100%); display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; padding: 20px; }
+        
+        #custom-toast { position: fixed; top: 20px; right: 20px; background: rgba(30, 41, 59, 0.95); color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); z-index: 10000; display: none; font-size: 0.9rem; }
+
+        .auth-box { background: white; padding: 40px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; }
+        .auth-box h2 { margin-bottom: 24px; color: #0068ff; font-size: 1.8rem; font-weight: 700; }
+        .auth-box input { width: 100%; padding: 12px 16px; margin-bottom: 14px; border: 1px solid #d8dae0; border-radius: 8px; outline: none; font-size: 1rem; }
+        .auth-box button { width: 100%; padding: 14px; background: #0068ff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s; }
+        .auth-box button:hover { background: #0056d2; }
+        .toggle-link { margin-top: 16px; font-size: 0.85rem; color: #64748b; }
+        .toggle-link a { color: #0068ff; cursor: pointer; font-weight: bold; text-decoration: none; }
+        .toggle-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div id="custom-toast">Thông báo</div>
+
+    <!-- Form Đăng Nhập -->
+    <div class="auth-box" id="login-box">
+        <h2>Đăng Nhập vào DaNô</h2>
+        <input type="text" id="login-id" placeholder="ID tài khoản..." autocomplete="off">
+        <input type="password" id="login-pass" placeholder="Mật khẩu...">
+        <button id="login-btn">Đăng Nhập</button>
+        <div class="toggle-link">Chưa có tài khoản? <a href="register.html">Đăng ký ngay</a></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-5yAQRXVMAHDNWjguSzs9Gpxy2pWAFtg",
+            authDomain: "superdokichat.firebaseapp.com",
+            projectId: "superdokichat",
+            storageBucket: "superdokichat.firebasestorage.app",
+            messagingSenderId: "1093619058272",
+            appId: "1:1093619058272:web:f5f5956e521f96ec3c2505"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const usersRef = collection(db, "users");
+
+        // Kiểm tra nếu người dùng đã đăng nhập từ trước thì cho vào thẳng index.html
+        if (localStorage.getItem("z_user_id")) {
+            window.location.href = "index.html";
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById("custom-toast");
+            toast.innerText = msg; 
+            toast.style.display = "block";
+            setTimeout(() => { toast.style.display = "none"; }, 3000);
+        }
+
+        // Xử lý Đăng Nhập
+        async function handleLogin() {
+            const id = document.getElementById("login-id").value.trim().toLowerCase();
+            const pass = document.getElementById("login-pass").value.trim();
+
+            if (!id || !pass) return showToast("Vui lòng điền đầy đủ tài khoản và mật khẩu!");
+
+            try {
+                const snapshot = await getDocs(query(usersRef, where("userId", "==", id), where("password", "==", pass)));
+                
+                if (snapshot.empty) return showToast("Sai tài khoản hoặc mật khẩu!");
+
+                let userDoc = null; 
+                snapshot.forEach(doc => { userDoc = doc.data(); });
+
+                // Lưu session vào localStorage
+                localStorage.setItem("z_display_name", userDoc.displayName);
+                localStorage.setItem("z_user_id", userDoc.userId);
+                localStorage.setItem("z_user_avatar", userDoc.avatar || "https://www.w3schools.com/howto/img_avatar.png");
+
+                // Chuyển hướng sang giao diện chính
+                window.location.href = "index.html";
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi kết nối đến Server!");
+            }
+        }
+
+        document.getElementById("login-btn").addEventListener("click", handleLogin);
+
+        // Cho phép bấm Enter để đăng nhập
+        document.getElementById("login-pass").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") handleLogin();
+        });
+        document.getElementById("login-id").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") handleLogin();
+        });
+    </script>
+</body>
+</html>
