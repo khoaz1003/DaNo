@@ -1,2 +1,2 @@
 # DaNô
-js a Zalo but more nigg guys
+js a Zalo but free guys
